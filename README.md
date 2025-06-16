@@ -2,7 +2,7 @@
 
 A comprehensive tool to generate reports of your latest published versions across GitHub repositories, including releases and packages. Now with a **stunning web interface**! 🚀
 
-## 🌟 New: Modern Web Interface
+## 🌟 Modern Web Interface
 
 **Experience your GitHub data like never before!**
 
