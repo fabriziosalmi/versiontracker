@@ -16,6 +16,7 @@ A comprehensive tool to generate reports of your latest published versions acros
 - [Output Formats](#output-formats)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
+- [Architecture](#architecture)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -791,15 +792,49 @@ docker build -t versiontracker .
 docker run -p 8080:8080 -e GITHUB_TOKEN=your_token versiontracker
 ```
 
+## Architecture
+
+For developers interested in understanding the internal structure and design decisions:
+
+### Project Structure
+
+The project is organized into clear, focused modules:
+
+- **`version_tracker.py`** - Core library with the main `GitHubVersionTracker` class
+- **`web_app.py`** - Flask web application with REST API
+- **`config.py`** - Configuration constants and settings
+- **`security_config.py`** - Security-related configuration
+
+### Key Design Principles
+
+1. **Separation of Concerns** - CLI, web, and core logic are separate
+2. **Single Responsibility** - Each module has a clear, focused purpose
+3. **Graceful Degradation** - Works even when some data is unavailable
+4. **Security First** - Input validation, rate limiting, security headers
+
+### Data Flow
+
+```
+User Input → GitHubVersionTracker → GitHub API → Data Processing → Output Formatting
+```
+
+For detailed architecture documentation including:
+- Component diagrams
+- API integration details
+- Security architecture
+- Caching strategy
+- Deployment options
+
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for comprehensive technical documentation.
+
 ## Contributing
 
 We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation, your help is appreciated.
 
-### How to Contribute
+### Quick Start for Contributors
 
-1. **Fork the repository**
+1. **Fork and clone the repository**
    ```bash
-   # Click "Fork" on GitHub, then clone your fork
    git clone https://github.com/YOUR_USERNAME/versiontracker.git
    cd versiontracker
    ```
