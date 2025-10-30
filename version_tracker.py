@@ -43,9 +43,32 @@ class PackageInfo:
     downloads: int
 
 class GitHubVersionTracker:
-    """Main class for tracking GitHub repository versions."""
+    """
+    Main class for tracking GitHub repository versions.
+    
+    This class provides methods to fetch repository information, releases,
+    and published packages from GitHub and package registries.
+    
+    Attributes:
+        token (Optional[str]): GitHub personal access token for authentication
+        headers (dict): HTTP headers for GitHub API requests
+        console (Console): Rich console for formatted output
+    
+    Example:
+        >>> tracker = GitHubVersionTracker(token="your_github_token")
+        >>> repos = tracker.get_user_repos("fabriziosalmi")
+        >>> tracker.generate_report("fabriziosalmi", output_format="rich")
+    """
     
     def __init__(self, token: Optional[str] = None):
+        """
+        Initialize the GitHub Version Tracker.
+        
+        Args:
+            token: Optional GitHub personal access token for higher API rate limits.
+                   Without token: 60 requests/hour
+                   With token: 5,000 requests/hour
+        """
         self.token = token
         self.headers = {
             'Accept': 'application/vnd.github.v3+json',
@@ -57,7 +80,26 @@ class GitHubVersionTracker:
         self.console = Console()
     
     def get_user_repos(self, username: str, include_forks: bool = False) -> List[Dict[str, Any]]:
-        """Get all repositories for a user."""
+        """
+        Get all repositories for a GitHub user.
+        
+        Fetches all public repositories for the specified user using pagination.
+        Repositories are sorted by last update date in descending order.
+        
+        Args:
+            username: GitHub username to fetch repositories for
+            include_forks: If True, includes forked repositories. Default is False.
+        
+        Returns:
+            List of repository dictionaries containing repository metadata
+            from GitHub API. Returns empty list if user not found or on error.
+        
+        Example:
+            >>> tracker = GitHubVersionTracker()
+            >>> repos = tracker.get_user_repos("fabriziosalmi", include_forks=False)
+            >>> for repo in repos:
+            ...     print(f"{repo['name']}: {repo['stargazers_count']} stars")
+        """
         repos = []
         page = 1
         per_page = 100
@@ -94,7 +136,27 @@ class GitHubVersionTracker:
         return repos
     
     def get_latest_release(self, repo_owner: str, repo_name: str) -> Optional[ReleaseInfo]:
-        """Get the latest release for a repository."""
+        """
+        Get the latest release information for a repository.
+        
+        Fetches the most recent GitHub release and combines it with repository
+        metadata like stars, forks, and programming language.
+        
+        Args:
+            repo_owner: Repository owner's GitHub username
+            repo_name: Name of the repository
+        
+        Returns:
+            ReleaseInfo object containing release details, or None if no release
+            exists or if the repository is not found.
+        
+        Example:
+            >>> tracker = GitHubVersionTracker()
+            >>> release = tracker.get_latest_release("fabriziosalmi", "versiontracker")
+            >>> if release:
+            ...     print(f"Version: {release.latest_version}")
+            ...     print(f"Downloads: {release.download_count}")
+        """
         url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
         
         response = requests.get(url, headers=self.headers)
@@ -126,7 +188,31 @@ class GitHubVersionTracker:
         )
     
     def get_packages(self, repo_owner: str, repo_name: str) -> List[PackageInfo]:
-        """Get packages for a repository."""
+        """
+        Get published packages for a repository.
+        
+        Detects and fetches information about packages published from this
+        repository to package registries (npm, PyPI, etc.).
+        
+        Args:
+            repo_owner: Repository owner's GitHub username
+            repo_name: Name of the repository
+        
+        Returns:
+            List of PackageInfo objects for detected packages. Returns empty
+            list if no packages are found or on error.
+        
+        Note:
+            Currently supports:
+            - npm packages (via package.json)
+            - Python packages (via setup.py, pyproject.toml, setup.cfg)
+        
+        Example:
+            >>> tracker = GitHubVersionTracker()
+            >>> packages = tracker.get_packages("fabriziosalmi", "versiontracker")
+            >>> for pkg in packages:
+            ...     print(f"{pkg.package_type}: {pkg.latest_version}")
+        """
         packages = []
         
         # Check for npm packages
@@ -234,7 +320,15 @@ class GitHubVersionTracker:
         return packages
     
     def _format_date(self, date_str: str) -> str:
-        """Format ISO date string to readable format."""
+        """
+        Format ISO date string to readable format.
+        
+        Args:
+            date_str: ISO 8601 date string from GitHub API
+        
+        Returns:
+            Formatted date string (YYYY-MM-DD) or "Unknown" if parsing fails
+        """
         if not date_str:
             return "Unknown"
         
@@ -245,7 +339,27 @@ class GitHubVersionTracker:
             return date_str
     
     def generate_report(self, username: str, include_forks: bool = False, output_format: str = 'table') -> None:
-        """Generate a comprehensive version report."""
+        """
+        Generate and display a comprehensive version report.
+        
+        Fetches all repositories for the user, gets release information,
+        detects published packages, and displays a formatted report.
+        
+        Args:
+            username: GitHub username to analyze
+            include_forks: If True, includes forked repositories. Default is False.
+            output_format: Output format - 'rich' (colored tables), 'table' (plain text),
+                          or 'json' (machine-readable). Default is 'table'.
+        
+        Note:
+            - This method outputs directly to console or file, doesn't return data
+            - For programmatic access, use get_user_repos(), get_latest_release(),
+              and get_packages() methods directly
+        
+        Example:
+            >>> tracker = GitHubVersionTracker(token="your_token")
+            >>> tracker.generate_report("fabriziosalmi", output_format="rich")
+        """
         self.console.print(f"[bold blue]Fetching repositories for {username}...[/bold blue]")
         
         repos = self.get_user_repos(username, include_forks)
